@@ -1,0 +1,7 @@
+*.pdf
+*.json
+*.xlsx
+.DS_Store
+/venv
+api_key.txt
+__pycache__

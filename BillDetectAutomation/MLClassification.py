@@ -41,7 +41,7 @@ def changeTokenToDict(tokenList: list[list[str]]):
         dictList.append(dictionary);
     return dictList;
 
-def addContextToToken(documentList: list[list[dict]]) -> list[list[dict]]:
+def addCompanyContextToToken(documentList: list[list[dict]]) -> list[list[dict]]:
     commonSufixies = ["ltd", "inc", "corp"];
     for document in documentList:
         i = 0;
@@ -49,10 +49,23 @@ def addContextToToken(documentList: list[list[dict]]) -> list[list[dict]]:
             token = document[i];
             text: str = token["text"];
             token["relativePos"] = i/len(document);
-            token["isNumeric"] = text[0].isnumeric();
+            token["isNumeric"] = text.isnumeric();
             token["isCapitalize"] = text[0].isupper();
             token["isCommonSufix"] = text.lower() in commonSufixies;
             token["isWord"] = text.isalpha();
+    return documentList;
+
+def addMoneyContextToToken(documentList: list[list[dict]]) -> list[list[dict]]:
+    commonSufixies: list[str] = ["total"];
+    for document in documentList:
+        i = 0;
+        for i in range(len(document)):
+            token = document[i];
+            text: str = token["text"];
+            token["relativePos"] = i / len(document);
+            token["isNumeric"] = text.isnumeric();
+            token["isCommonSufix"] = text.lower() in commonSufixies;
+
     return documentList;
 
 def exportJsonToLabelStudio(paths: list[str], tokenList: list[list[str]]):
@@ -142,14 +155,14 @@ def labelTrainingData():
 def trainData():
     x,y = importAndSplitLabelData("./TrainData.json");
 #    x,y = oversamplingData(x,y);
-    x = addContextToToken(x);
+    x = addCompanyContextToToken(x);
     model = trainModel(x,y);
     paths = ["./Culligan Water Inv#3021896.pdf"];
     paths, texts = readPdfFiles(paths);
     print(texts);
     tokenList = tokenizeText(texts);
     tokenList = changeTokenToDict(tokenList);
-    predictX = addContextToToken(tokenList);
+    predictX = addCompanyContextToToken(tokenList);
     predictions = model.predict(predictX)[0];
     print(predictions);
     for i in range(len(predictions)):
