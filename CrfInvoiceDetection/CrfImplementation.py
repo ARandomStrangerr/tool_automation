@@ -12,6 +12,7 @@ def tokenizeText(pathName:str) -> list[str]:
     text = re.sub(r'[^\w\s]', '', text); # remove symbols
     text = text.strip(); # removes space at 2 ends
     tokens = text.split(' '); # split into tokens
+    tokens = list(filter(None, tokens));
     return tokens;
 
 # step 2: transfer list of token to .json file ready for label-studio
@@ -86,11 +87,13 @@ def addContextToTrainData_CompanyName(data):
             y.append("O");
     return x,y;
 
-crfModel = None;
+# step 2: train the model
 def trainModel(x, y):
-    crfModel = CRF(algorithm='lbfgs', max_iterations=100, all_possible_transitions=True);
+    crfModel = CRF(algorithm='lbfgs', max_iterations=100, c1=0.001, c2=0.01, all_possible_transitions=True);
     crfModel.fit(x,y);
-    return;
+    return crfModel;
+
+# step 3: fit the model
 
 def Group2():
     # read from export file
@@ -109,8 +112,17 @@ def Group2():
         x, y = addContextToTrainData_CompanyName(invoice);
         X.append(x);
         Y.append(y);
+ 
+    
     # train the data
-    trainModel(X,Y);
+    model = trainModel(X,Y);
+    realInvoice = tokenizeText("./Anderson Air Inv#9569.pdf");
+    realInvoiceContext = addContextToToken_CompanyName(realInvoice);
+    prediction = model.predict([realInvoiceContext])[0];
+    companyName = "";
+    for idx, y in enumerate(prediction):
+        if y != "O":
+            companyName += " " + realInvoice[idx];
     return;
 
 #Group1();
